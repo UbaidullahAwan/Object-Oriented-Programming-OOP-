@@ -1,1 +1,31 @@
-*
+#include<iostream>
+#include<fstream>
+using namespace std;
+int main(){
+    int rollnumber;
+    string name;                                                // Variable declaration     
+    cout<<"Enter name and rollnumber"<<endl;                    // Print Name and roll number   
+    cin>>name>>rollnumber;                                      // Take name and Roll number
+    fstream file("notes.txt", ios::app);                        // Append notes.txt file
+    if(file.is_open()){                                             // If file is opened
+        file<<"Name: "<<name<<endl;
+        file<<"Rollnumber: "<<rollnumber<<endl;
+    }else{                                                              //else Load Error
+        cout<<"Error while loading"<<endl;
+    };
+    file.close();                                   //Close file
+    string line;                                // line variable declaraton
+    cout<<"======================================================================="<<endl;
+    ifstream readfile("notes.txt");                                                             
+    if(!readfile){
+        cout<<"Error while loading and opening the file"<<endl;
+    }else{
+        cout<<"Current file's contents"<<endl;
+        getline(readfile, line);
+        while(getline(readfile,line)){
+            cout<<line<<endl;
+        }
+        readfile.close();
+    }
+return 0;
+}
