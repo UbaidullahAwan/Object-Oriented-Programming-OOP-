@@ -1,0 +1,41 @@
+#include <iostream>
+using namespace std;
+
+// Base class Printer
+class Printer {
+public:
+    void print_document() {
+        cout << "Printing document..." << endl;
+    }
+};
+
+// Base class Scanner
+class Scanner {
+public:
+    void scan_document() {
+        cout << "Scanning document..." << endl;
+    }
+};
+
+// Derived class Photocopier inherits from Printer and Scanner
+class Photocopier : public Printer, public Scanner {
+public:
+    void photocopy() {
+        cout << "Starting photocopy process..." << endl;
+        scan_document();   // from Scanner
+        print_document();  // from Printer
+        cout << "Photocopy completed!" << endl;
+    }
+};
+
+// Main function
+int main() {
+    Photocopier pc;
+
+    cout << "=== Device Operations ===" << endl;
+    pc.print_document();   // Inherited from Printer
+    pc.scan_document();    // Inherited from Scanner
+    pc.photocopy();        // Own function
+
+    return 0;
+}
