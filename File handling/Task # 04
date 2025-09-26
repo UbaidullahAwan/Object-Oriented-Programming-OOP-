@@ -1,0 +1,42 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+int main() {
+    // Create and open file in write mode
+    ofstream outFile("students.txt");
+
+    if (!outFile) {
+        cerr << "Error: Could not create students.txt" << endl;
+        return 1;
+    }
+
+    //  Write name and roll number of 3 students
+    string names[3] = {"Ali", "Sara", "Usman"};
+    int rolls[3] = {101, 102, 103};
+
+    for (int i = 0; i < 3; i++) {
+        outFile << "Name: " << names[i] << ", Roll No: " << rolls[i] << endl;
+    }
+
+    outFile.close(); // Close after writing
+
+    //  Open file in read mode
+    ifstream inFile("students.txt");
+
+    if (!inFile) {
+        cerr << "Error: Could not open students.txt" << endl;
+        return 1;
+    }
+
+    //  Read and display student details
+    string line;
+    cout << "Student Details from File:" << endl;
+    while (getline(inFile, line)) {
+        cout << line << endl;
+    }
+
+    inFile.close();
+    return 0;
+}
