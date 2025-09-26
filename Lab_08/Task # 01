@@ -1,0 +1,58 @@
+#include <iostream>
+using namespace std;
+
+// Base class
+class Employee {
+public:
+    // Virtual function
+    virtual double calculateSalary() {
+        cout << "Base Employee salary calculation called." << endl;
+        return 0;
+    }
+    // Virtual destructor 
+    virtual ~Employee() {}
+};
+
+// Derived class for permanent employees
+class PermanentEmployee : public Employee {
+private:
+    double basicSalary;
+    double bonus;
+public:
+    PermanentEmployee(double b, double bn) : basicSalary(b), bonus(bn) {}
+
+    double calculateSalary() override {
+        return basicSalary + bonus;
+    }
+};
+
+// Derived class for contract employees
+class ContractEmployee : public Employee {
+private:
+    double hourlyRate;
+    int hoursWorked;
+public:
+    ContractEmployee(double rate, int hours) : hourlyRate(rate), hoursWorked(hours) {}
+
+    double calculateSalary() override {
+        return hourlyRate * hoursWorked;
+    }
+};
+
+int main() {
+    // Permanent employee
+    Employee* emp1 = new PermanentEmployee(40000, 5000);
+
+    // Contract employee
+    Employee* emp2 = new ContractEmployee(800, 30);
+
+    // Polymorphism: base class pointer calling derived class methods
+    cout << "Permanent Employee Salary: " << emp1->calculateSalary() << endl;
+    cout << "Contract Employee Salary: " << emp2->calculateSalary() << endl;
+
+    // Cleanup
+    delete emp1;
+    delete emp2;
+
+    return 0;
+}
