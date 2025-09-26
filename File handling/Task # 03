@@ -1,0 +1,36 @@
+#include <iostream>
+#include <fstream>
+#include <string>
+using namespace std;
+
+int main() {
+    ifstream inFile("notes.txt");   // Open source file in read mode
+    ofstream outFile("copy_notes.txt"); // Open destination file in write mode
+
+    if (!inFile) {
+        cerr << "Error: Could not open notes.txt" << endl;
+        return 1;
+    }
+
+    if (!outFile) {
+        cerr << "Error: Could not create copy_notes.txt" << endl;
+        return 1;
+    }
+
+    string line;
+    int lineCount = 0;
+
+    // Read from notes.txt line by line
+    while (getline(inFile, line)) {
+        lineCount++;
+        outFile << line << endl;  // Copy content to new file
+    }
+
+    // Display total number of lines
+    cout << "Total number of lines in notes.txt: " << lineCount << endl;
+
+    inFile.close();
+    outFile.close();
+
+    return 0;
+}
