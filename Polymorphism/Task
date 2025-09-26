@@ -1,0 +1,57 @@
+#include <iostream>
+#include <cmath>
+using namespace std;
+
+// Base class Shape
+class Shape {
+public:
+    // Virtual function for area
+    virtual double area() {
+        cout << "Base Shape area called." << endl;
+        return 0;
+    }
+
+    // Virtual destructor for safety
+    virtual ~Shape() {}
+};
+
+// Derived class Rectangle
+class Rectangle : public Shape {
+private:
+    double length, width;
+public:
+    Rectangle(double l, double w) : length(l), width(w) {}
+
+    double area() override {
+        return length * width;
+    }
+};
+
+// Derived class Circle
+class Circle : public Shape {
+private:
+    double radius;
+public:
+    Circle(double r) : radius(r) {}
+
+    double area() override {
+        return M_PI * radius * radius;
+    }
+};
+
+int main() {
+    // Base class pointer
+    Shape* shapePtr;
+
+    // Rectangle object
+    Rectangle rect(5.0, 3.0);
+    shapePtr = &rect;
+    cout << "Rectangle Area: " << shapePtr->area() << endl;
+
+    // Circle object
+    Circle circ(4.0);
+    shapePtr = &circ;
+    cout << "Circle Area: " << shapePtr->area() << endl;
+
+    return 0;
+}
