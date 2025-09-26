@@ -1,0 +1,56 @@
+#include <iostream>
+#include <string>
+using namespace std;
+
+// Base class
+class Person {
+protected:
+    string name;
+public:
+    Person(string n = "Unknown") : name(n) {}
+    void display() {
+        cout << "Name: " << name << endl;
+    }
+};
+
+// Derived class Student, virtually inherits Person
+class Student : virtual public Person {
+protected:
+    int rollNo;
+public:
+    Student(string n, int r) : Person(n), rollNo(r) {}
+    void showStudent() {
+        cout << "Roll No: " << rollNo << endl;
+    }
+};
+
+// Derived class Teacher, virtually inherits Person
+class Teacher : virtual public Person {
+protected:
+    string subject;
+public:
+    Teacher(string n, string s) : Person(n), subject(s) {}
+    void showTeacher() {
+        cout << "Subject: " << subject << endl;
+    }
+};
+
+// TeachingAssistant inherits both Student and Teacher
+class TeachingAssistant : public Student, public Teacher {
+public:
+    TeachingAssistant(string n, int r, string s)
+        : Person(n), Student(n, r), Teacher(n, s) {}
+
+    void showDetails() {
+        display();       // No ambiguity (only 1 Person copy)
+        showStudent();
+        showTeacher();
+    }
+};
+
+int main() {
+    TeachingAssistant ta("Ali", 101, "Computer Science");
+    ta.showDetails();
+
+    return 0;
+}
