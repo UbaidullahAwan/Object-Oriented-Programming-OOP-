@@ -362,3 +362,734 @@ public:
         pdf << "CUSTOMER DETAILS:\n";
         pdf << "Name: " << user.getName() << "\n";
         pdf << "Username: " << user.getUsername() << "\n\n";
+
+#include <iostream>
+#include <vector>               // For standard template library functions
+#include <string>
+#include <fstream>              // for file handling
+#include <iomanip>              // for set(W) and setprecision 
+#include <ctime>                // C++ library to include date and time function
+#include <sstream>              // To treat strings as input/output variables
+using namespace std;
+
+// Base Vehicle class
+class Vehicle {
+protected:
+    string id;
+    string brand;
+    string model;
+    int year;
+    double dailyRate;
+    bool available;
+    int ownerId; // -1 for admin cars, userId for user-owned cars
+
+public:         // constructor with member initializer
+    Vehicle() : id(""), year(0), dailyRate(0), available(true), ownerId(-1) {}
+
+                // Parameterized constructor with member initialzers
+                
+    Vehicle(string i, string b, string m, int y, double rate, int owner) 
+        : id(i), brand(b), model(m), year(y), dailyRate(rate), available(true), ownerId(owner) {}
+
+    virtual void display() const {          // virtual function with display results
+        cout << "ID: " << id << " | " << brand << " " << model 
+             << " (" << year << ") | Rate: PKR" << dailyRate << "/day | "
+             << (available ? "Available" : "Rented") 
+             << " | Owner: " << (ownerId == -1 ? "System" : "User") << endl;
+    }
+
+    string getId() const { 
+        return id;
+     }
+    bool isAvailable() const {
+         return available; 
+         }
+    void setAvailable(bool status) {
+         available = status;
+          }
+    double getDailyRate() const {
+         return dailyRate; 
+         }
+    string getBrand() const { 
+        return brand; }
+    string getModel() const { 
+        return model; }
+    int getOwnerId() const {
+         return ownerId; }
+    int getYear() const { 
+        return year; }
+    
+    virtual string serialize() const {              // simple function
+        stringstream ss;
+        ss << id << "," << brand << "," << model << "," << year << "," 
+           << dailyRate << "," << available << "," << ownerId;
+        return ss.str();
+    }
+};
+
+// RentalCar inherits from Vehicle
+class RentalCar : public Vehicle {              // Single inheritance
+private:
+    string fuelType;
+    int seatingCapacity;
+
+public:
+    RentalCar() : Vehicle(), seatingCapacity(0) {}
+    
+    RentalCar(string i, string b, string m, int y, double rate, string fuel, int seats, int owner)
+        : Vehicle(i, b, m, y, rate, owner), fuelType(fuel), seatingCapacity(seats) {}
+
+    void display() const override {
+        cout << "ID: " << id << " | " << brand << " " << model 
+             << " (" << year << ") | PKR" << dailyRate << "/day | "
+             << fuelType << " | " << seatingCapacity << " seats | "
+             << (available ? "Available" : "Rented") 
+             << " | Owner: " << (ownerId == -1 ? "System" : "User ID " + to_string(ownerId)) << endl;
+    }
+
+    string getFuelType() const {
+         return fuelType; 
+         }
+    int getSeats() const { 
+        return seatingCapacity;
+         }
+    
+    string serialize() const override {
+        stringstream ss;
+        ss << id << "," << brand << "," << model << "," << year << "," 
+           << dailyRate << "," << available << "," << ownerId << "," 
+           << fuelType << "," << seatingCapacity;
+        return ss.str();
+    }
+    
+    static RentalCar deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 9) {
+            return RentalCar(
+                tokens[0],        // id (now string)
+                tokens[1],        // brand
+                tokens[2],        // model
+                stoi(tokens[3]),  // year
+                stod(tokens[4]),  // dailyRate
+                tokens[7],        // fuelType
+                stoi(tokens[8]),  // seatingCapacity
+                stoi(tokens[6])   // ownerId
+            );
+        }
+        return RentalCar();
+    }
+};
+
+// SaleCar class for cars available for purchase
+class SaleCar {
+private:
+    string id;
+    string brand;
+    string model;
+    int year;
+    double price;
+    int sellerId;
+    bool sold;
+
+public:
+    SaleCar() : id(""), year(0), price(0), sellerId(-1), sold(false) {}
+    
+    SaleCar(string i, string b, string m, int y, double p, int seller)
+        : id(i), brand(b), model(m), year(y), price(p), sellerId(seller), sold(false) {}
+
+    void display() const {
+        cout << "ID: " << id << " | " << brand << " " << model 
+             << " (" << year << ") | Price: PKR" << price 
+             << " | " << (sold ? "SOLD" : "Available") << endl;
+    }
+
+    string getId() const { 
+        return id;
+         }
+    string getBrand() const {
+         return brand;
+          }
+    string getModel() const {
+         return model; 
+         }
+    int getYear() const {
+         return year; 
+         }
+    bool isSold() const { 
+        return sold; 
+        }
+    void setSold(bool status) { 
+        sold = status;
+         }
+    double getPrice() const { 
+        return price; 
+        }
+    int getSellerId() const {
+         return sellerId; 
+         }
+    
+    string serialize() const {
+        stringstream ss;
+        ss << id << "," << brand << "," << model << "," << year << "," 
+           << price << "," << sellerId << "," << sold;
+        return ss.str();
+    }
+    
+    static SaleCar deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 7) {
+            SaleCar car(
+                tokens[0],        // id (now string)
+                tokens[1],        // brand
+                tokens[2],        // model
+                stoi(tokens[3]),  // year
+                stod(tokens[4]),  // price
+                stoi(tokens[5])   // sellerId
+            );
+            car.setSold(stoi(tokens[6]));
+            return car;
+        }
+        return SaleCar();
+    }
+};
+
+// User class
+class User {
+private:
+    int userId;
+    string username;
+    string password;
+    string name;
+    bool isAdmin;
+
+public:
+    User() : userId(0), isAdmin(false) {}
+    
+    User(int id, string uname, string pass, string n, bool admin)
+        : userId(id), username(uname), password(pass), name(n), isAdmin(admin) {}
+
+    int getUserId() const { 
+        return userId; 
+        }
+    string getUsername() const {
+         return username;
+          }
+    string getPassword() const {
+         return password;
+          }
+    string getName() const { 
+        return name; 
+        }
+    bool getIsAdmin() const { 
+        return isAdmin;
+         }
+    
+    string serialize() const {
+        stringstream ss;
+        ss << userId << "," << username << "," << password << "," << name << "," << isAdmin;
+        return ss.str();
+    }
+    
+    static User deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 5) {
+            return User(
+                stoi(tokens[0]),
+                tokens[1],
+                tokens[2],
+                tokens[3],
+                stoi(tokens[4])
+            );
+        }
+        return User();
+    }
+};
+
+// Rental Transaction class
+class RentalTransaction {
+private:
+    int transactionId;
+    int userId;
+    string carId;
+    time_t rentalDate;
+    time_t returnDate;
+    double totalCost;
+    bool isReturned;
+
+public:
+    RentalTransaction() : transactionId(0), userId(0), carId(""), totalCost(0), isReturned(false) {
+        rentalDate = time(0);
+        returnDate = 0;
+    }
+    
+    RentalTransaction(int tid, int uid, string cid, double cost)
+        : transactionId(tid), userId(uid), carId(cid), totalCost(cost), isReturned(false) {
+        rentalDate = time(0);
+        returnDate = 0;
+    }
+
+    void markReturned(int days) {
+        isReturned = true;
+        returnDate = time(0);
+    }
+
+    int getTransactionId() const {
+         return transactionId; 
+         }
+    int getUserId() const { 
+        return userId; 
+        }
+    string getCarId() const { 
+        return carId; 
+        }
+    double getTotalCost() const { 
+        return totalCost;
+         }
+    bool getIsReturned() const {
+         return isReturned; 
+         }
+    
+    void display() const {
+        cout << "Transaction ID: " << transactionId 
+             << " | Car ID: " << carId 
+             << " | Cost: PKR" << totalCost 
+             << " | Status: " << (isReturned ? "Returned" : "Active") << endl;
+    }
+    
+    string serialize() const {
+        stringstream ss;
+        ss << transactionId << "," << userId << "," << carId << "," 
+           << totalCost << "," << isReturned;
+        return ss.str();
+    }
+    
+    static RentalTransaction deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 5) {
+            RentalTransaction trans(
+                stoi(tokens[0]),
+                stoi(tokens[1]),
+                tokens[2],        // carId (now string)
+                stod(tokens[3])
+            );
+            if (stoi(tokens[4])) {
+                trans.markReturned(0);
+            }
+            return trans;
+        }
+        return RentalTransaction();
+    }
+};
+
+// PDF Export class
+class PDFExporter {
+public:
+    static void exportRentalInvoice(const string& filename, const RentalCar& car, 
+                                   const User& user, int days, double cost) {
+        ofstream pdf(filename);
+        
+        pdf << "================================================================================\n";
+        pdf << "                          CAR RENTAL INVOICE\n";
+        pdf << "================================================================================\n\n";
+        
+        time_t now = time(0);
+        pdf << "Date: " << ctime(&now);
+        pdf << "Invoice Number: INV-" << time(0) << "\n\n";
+        
+        pdf << "CUSTOMER DETAILS:\n";
+        pdf << "Name: " << user.getName() << "\n";
+        pdf << "Username: " << user.getUsername() << "\n\n";
+
+pdf << "RENTAL DETAILS:\n";
+        pdf << "Car ID: " << car.getId() << "\n";
+        pdf << "Brand: " << car.getBrand() << "\n";
+        pdf << "Model: " << car.getModel() << "\n";
+        pdf << "Year: " << car.getYear() << "\n";
+        pdf << "Fuel Type: " << car.getFuelType() << "\n";
+        pdf << "Seating Capacity: " << car.getSeats() << " seats\n\n";
+        
+        pdf << "PRICING:\n";
+        pdf << "Daily Rate: PKR" << fixed << setprecision(2) << car.getDailyRate() << "\n";
+        pdf << "Number of Days: " << days << "\n";
+        pdf << "----------------------------------------\n";
+        pdf << "TOTAL COST: PKR" << cost << "\n\n";
+        
+        pdf << "================================================================================\n";
+        pdf << " Thank you for choosing our Car Rental Service!\n";
+        pdf << "================================================================================\n";
+        
+        pdf.close();
+    }
+    
+    static void exportPurchaseInvoice(const string& filename, const SaleCar& car, const User& user) {
+        ofstream pdf(filename);
+        
+        pdf << "================================================================================\n";
+        pdf << " CAR PURCHASE INVOICE\n";
+        pdf << "================================================================================\n\n";
+        
+        time_t now = time(0);
+        pdf << "Date: " << ctime(&now);
+        pdf << "Invoice Number: SALE-" << time(0) << "\n\n";
+        
+        pdf << "BUYER DETAILS:\n";
+        pdf << "Name: " << user.getName() << "\n";
+        pdf << "Username: " << user.getUsername() << "\n\n";
+        
+        pdf << "CAR DETAILS:\n";
+        pdf << "Car ID: " << car.getId() << "\n";
+        pdf << "Brand: " << car.getBrand() << "\n";
+        pdf << "Model: " << car.getModel() << "\n";
+        pdf << "Year: " << car.getYear() << "\n\n";
+        
+        pdf << "PURCHASE PRICE: PKR" << fixed << setprecision(2) << car.getPrice() << "\n\n";
+        
+        pdf << "================================================================================\n";
+        pdf << " Congratulations on your purchase!\n";
+        pdf << "================================================================================\n";
+        
+        pdf.close();
+    }
+    
+    static void exportRevenueReport(const string& filename, const vector<RentalTransaction>& transactions,
+                                   const vector<RentalCar>& cars) {
+        ofstream pdf(filename);
+        
+        pdf << "================================================================================\n";
+        pdf << " REVENUE REPORT\n";
+        pdf << "================================================================================\n\n";
+        
+        time_t now = time(0);
+        pdf << "Report Generated: " << ctime(&now) << "\n";
+        
+        double totalRevenue = 0;
+        int totalRentals = 0;
+        int activeRentals = 0;
+        int completedRentals = 0;
+        
+        for (const auto& trans : transactions) {
+            totalRevenue += trans.getTotalCost();
+            totalRentals++;
+            if (trans.getIsReturned()) {
+                completedRentals++;
+            } else {
+                activeRentals++;
+            }
+        }
+        
+        pdf << "SUMMARY:\n";
+        pdf << "----------------------------------------\n";
+        pdf << "Total Rentals: " << totalRentals << "\n";
+        pdf << "Active Rentals: " << activeRentals << "\n";
+        pdf << "Completed Rentals: " << completedRentals << "\n";
+        pdf << "Total Revenue: PKR" << fixed << setprecision(2) << totalRevenue << "\n\n";
+        
+        pdf << "RENTAL TRANSACTIONS:\n";
+        pdf << "----------------------------------------\n";
+        for (const auto& trans : transactions) {
+            pdf << "Transaction ID: " << trans.getTransactionId() 
+                << " | Car ID: " << trans.getCarId()
+                << " | Cost: PKR" << trans.getTotalCost()
+                << " | Status: " << (trans.getIsReturned() ? "Returned" : "Active") << "\n";
+        }
+        
+        pdf << "\n================================================================================\n";
+        pdf.close();
+    }
+    
+    static void exportAllCars(const string& filename, const vector<RentalCar>& cars) {
+        ofstream pdf(filename);
+        
+        pdf << "================================================================================\n";
+        pdf << " ALL RENTAL CARS REPORT\n";
+        pdf << "================================================================================\n\n";
+        
+        time_t now = time(0);
+        pdf << "Report Generated: " << ctime(&now) << "\n";
+        
+        pdf << "TOTAL CARS: " << cars.size() << "\n\n";
+        
+        pdf << "CAR LISTINGS:\n";
+        pdf << "----------------------------------------\n";
+        for (const auto& car : cars) {
+            pdf << "ID: " << car.getId() 
+                << " | " << car.getBrand() << " " << car.getModel()
+                << " (" << car.getYear() << ")"
+                << " | PKR" << fixed << setprecision(2) << car.getDailyRate() << "/day"
+                << " | " << car.getFuelType()
+                << " | " << car.getSeats() << " seats"
+                << " | " << (car.isAvailable() ? "Available" : "Rented")
+                << " | Owner: " << (car.getOwnerId() == -1 ? "System" : "User ID " + to_string(car.getOwnerId()))
+                << "\n";
+        }
+        
+        pdf << "\n================================================================================\n";
+        pdf.close();
+    }
+};
+
+// Main System class
+class CarRentalSystem {
+private:
+    vector<RentalCar> rentalCars;
+    vector<SaleCar> saleCars;
+    vector<User> users;
+    vector<RentalTransaction> transactions;
+    User* currentUser;
+    int nextCarId;
+    int nextSaleCarId;
+    int nextUserId;
+    int nextTransactionId;
+
+public:
+    CarRentalSystem() : currentUser(nullptr), nextCarId(1), nextSaleCarId(1), nextUserId(1), nextTransactionId(1) {
+        loadData();
+        
+        // Add default admin if no users exist
+        if (users.empty()) {
+            users.push_back(User(nextUserId++, "admin", "admin123", "Administrator", true));
+            saveUsers();
+        }
+    }
+    
+    ~CarRentalSystem() {
+        saveData();
+    }
+
+    void run() {
+        while (true) {
+            if (currentUser == nullptr) {
+                if (!loginMenu()) break;
+            } else if (currentUser->getIsAdmin()) {
+                adminMenu();
+            } else {
+                userMenu();
+            }
+        }
+    }
+
+private:
+    string generateCarId() {
+        stringstream ss;
+        ss << "CAR" << setfill('0') << setw(4) << nextCarId++;
+        return ss.str();
+    }
+    
+    string generateSaleCarId() {
+        stringstream ss;
+        ss << "SALE" << setfill('0') << setw(4) << nextSaleCarId++;
+        return ss.str();
+    }
+
+    // File handling methods
+    void saveRentalCars() {
+        ofstream file("rental_cars.txt");
+        for (const auto& car : rentalCars) {
+            file << car.serialize() << endl;
+        }
+        file.close();
+    }
+    
+    void loadRentalCars() {
+        ifstream file("rental_cars.txt");
+        if (!file.is_open()) return;
+        
+        string line;
+        rentalCars.clear();
+        
+        while (getline(file, line)) {
+            if (!line.empty()) {
+                RentalCar car = RentalCar::deserialize(line);
+                rentalCars.push_back(car);
+            }
+        }
+        file.close();
+    }
+    
+    void saveSaleCars() {
+        ofstream file("sale_cars.txt");
+        for (const auto& car : saleCars) {
+            file << car.serialize() << endl;
+        }
+        file.close();
+    }
+    
+    void loadSaleCars() {
+        ifstream file("sale_cars.txt");
+        if (!file.is_open()) return;
+        
+        string line;
+        saleCars.clear();
+        
+        while (getline(file, line)) {
+            if (!line.empty()) {
+                SaleCar car = SaleCar::deserialize(line);
+                saleCars.push_back(car);
+            }
+        }
+        file.close();
+    }
+    
+    void saveUsers() {
+        ofstream file("users.txt");
+        for (const auto& user : users) {
+            file << user.serialize() << endl;
+        }
+        file.close();
+    }
+    
+    void loadUsers() {
+        ifstream file("users.txt");
+        if (!file.is_open()) return;
+        
+        string line;
+        users.clear();
+        int maxId = 0;
+        
+        while (getline(file, line)) {
+            if (!line.empty()) {
+                User user = User::deserialize(line);
+                users.push_back(user);
+                if (user.getUserId() > maxId) maxId = user.getUserId();
+            }
+        }
+        nextUserId = maxId + 1;
+        file.close();
+    }
+    
+    void saveTransactions() {
+        ofstream file("transactions.txt");
+        for (const auto& trans : transactions) {
+            file << trans.serialize() << endl;
+        }
+        file.close();
+    }
+    
+    void loadTransactions() {
+        ifstream file("transactions.txt");
+        if (!file.is_open()) return;
+        
+        string line;
+        transactions.clear();
+        int maxId = 0;
+        
+        while (getline(file, line)) {
+            if (!line.empty()) {
+                RentalTransaction trans = RentalTransaction::deserialize(line);
+                transactions.push_back(trans);
+                if (trans.getTransactionId() > maxId) maxId = trans.getTransactionId();
+            }
+        }
+        nextTransactionId = maxId + 1;
+        file.close();
+    }
+    
+    void loadData() {
+        loadUsers();
+        loadRentalCars();
+        loadSaleCars();
+        loadTransactions();
+    }
+    
+    void saveData() {
+        saveUsers();
+        saveRentalCars();
+        saveSaleCars();
+        saveTransactions();
+    }
+
+    bool loginMenu() {
+        cout << "\n========== CAR RENTAL SYSTEM ==========\n";
+        cout << "1. Login\n";
+        cout << "2. Register\n";
+        cout << "3. Exit\n";
+        cout << "Choice: ";
+        
+        int choice;
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+            case 1: return login();
+            case 2: registerUser(); return true;
+            case 3: saveData(); return false;
+            default: 
+                cout << "Invalid choice!\n";
+                return true;
+        }
+    }
+
+    bool login() {
+        string username, password;
+        cout << "Username: ";
+        getline(cin, username);
+        cout << "Password: ";
+        getline(cin, password);
+
+        for (auto& user : users) {
+            if (user.getUsername() == username && user.getPassword() == password) {
+                currentUser = &user;
+                cout << "Login successful! Welcome " << user.getName() << endl;
+                return true;
+            }
+        }
+        cout << "Invalid credentials!\n";
+        return true;
+    }
+
+    void registerUser() {
+        string username, password, name;
+        cout << "Enter username: ";
+        getline(cin, username);
+        cout << "Enter password: ";
+        getline(cin, password);
+        cout << "Enter full name: ";
+        getline(cin, name);
+
+        users.push_back(User(nextUserId++, username, password, name, false));
+        saveUsers();
+        cout << "Registration successful!\n";
+    }
+
+    void adminMenu() {
+        cout << "\n========== ADMIN MENU ==========\n";
+        cout << "1. View All Rental Cars\n";
+        cout << "2. Add New Rental Car\n";
+        cout << "3. Delete Rental Car\n";
+        cout << "4. View All Rentals\n";
+        cout << "5. View Revenue Report\n";
+        cout << "6. Add Car for Sale\n";
+        cout << "7. View All Sale Cars\n";
+        cout << "8. Export Reports to PDF\n";
+        cout << "9. Logout\n";
+        cout << "Choice: ";
+
+        int choice;
