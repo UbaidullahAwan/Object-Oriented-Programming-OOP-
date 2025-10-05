@@ -728,3 +728,368 @@ private:
         cout << "Choice: ";
 
         int choice;
+              cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+            case 1: viewAllRentalCars(); break;
+            case 2: addRentalCar(true); break;
+            case 3: deleteRentalCar(); break;
+            case 4: viewAllRentals(); break;
+            case 5: viewRevenue(); break;
+            case 6: addSaleCar(); break;
+            case 7: viewAllSaleCars(); break;
+            case 8: exportReportsMenu(); break;
+            case 9: currentUser = nullptr; cout << "Logged out.\n"; break;
+            default: cout << "Invalid choice!\n";
+        }
+    }
+
+    void userMenu() {
+        cout << "\n========== USER MENU ==========\n";
+        cout << "1. View Available Rental Cars\n";
+        cout << "2. Rent a Car\n";
+        cout << "3. Return a Car\n";
+        cout << "4. My Rental History\n";
+        cout << "5. Add My Car for Rent\n";
+        cout << "6. View My Listed Cars\n";
+        cout << "7. View Cars for Sale\n";
+        cout << "8. Add My Car for Sale\n";
+        cout << "9. Buy a Car\n";
+        cout << "10. Logout\n";
+        cout << "Choice: ";
+
+        int choice;
+        cin >> choice;
+        cin.ignore();
+
+        switch (choice) {
+            case 1: viewAvailableRentalCars(); break;
+            case 2: rentCar(); break;
+            case 3: returnCar(); break;
+            case 4: viewMyRentals(); break;
+            case 5: addRentalCar(false); break;
+            case 6: viewMyListedCars(); break;
+            case 7: viewAvailableSaleCars(); break;
+            case 8: addUserSaleCar(); break;
+            case 9: buyCar(); break;
+            case 10: currentUser = nullptr; cout << "Logged out.\n"; break;
+            default: cout << "Invalid choice!\n";
+        }
+    }
+
+    void exportReportsMenu() {
+        cout << "\n--- Export Reports ---\n";
+        cout << "1. Export Revenue Report\n";
+        cout << "2. Export All Cars Report\n";
+        cout << "3. Back\n";
+        cout << "Choice: ";
+        
+        int choice;
+        cin >> choice;
+        cin.ignore();
+        
+        switch (choice) {
+            case 1:
+                PDFExporter::exportRevenueReport("revenue_report.pdf", transactions, rentalCars);
+                cout << "Revenue report exported to 'revenue_report.pdf'\n";
+                break;
+            case 2:
+                PDFExporter::exportAllCars("all_cars_report.pdf", rentalCars);
+                cout << "All cars report exported to 'all_cars_report.pdf'\n";
+                break;
+            case 3:
+                break;
+            default:
+                cout << "Invalid choice!\n";
+        }
+    }
+
+    void viewAllRentalCars() {
+        cout << "\n--- All Rental Cars ---\n";
+        if (rentalCars.empty()) {
+            cout << "No cars in system.\n";
+            return;
+        }
+        for (const auto& car : rentalCars) {
+            car.display();
+        }
+    }
+
+    void viewAvailableRentalCars() {
+        cout << "\n--- Available Rental Cars ---\n";
+        bool found = false;
+        for (const auto& car : rentalCars) {
+            if (car.isAvailable()) {
+                car.display();
+                found = true;
+            }
+        }
+        if (!found) cout << "No cars available.\n";
+    }
+
+    void addRentalCar(bool isAdmin) {
+        string brand, model, fuel;
+        int year, seats;
+        double rate;
+
+        cout << "Brand: ";
+        getline(cin, brand);
+        cout << "Model: ";
+        getline(cin, model);
+        cout << "Year: ";
+        cin >> year;
+        cout << "Daily Rate: PKR";
+        cin >> rate;
+        cin.ignore();
+        cout << "Fuel Type: ";
+        getline(cin, fuel);
+        cout << "Seating Capacity: ";
+        cin >> seats;
+        cin.ignore();
+
+        int ownerId = isAdmin ? -1 : currentUser->getUserId();
+        string carId = generateCarId();
+        rentalCars.push_back(RentalCar(carId, brand, model, year, rate, fuel, seats, ownerId));
+        saveRentalCars();
+        cout << "Car added successfully for rent with ID: " << carId << "\n";
+    }
+
+    void deleteRentalCar() {
+        string id;
+        cout << "Enter Car ID to delete: ";
+        getline(cin, id);
+
+        for (auto it = rentalCars.begin(); it != rentalCars.end(); ++it) {
+            if (it->getId() == id) {
+                if (!it->isAvailable()) {
+                    cout << "Cannot delete: Car is currently rented.\n";
+                    return;
+                }
+                rentalCars.erase(it);
+                saveRentalCars();
+                cout << "Car deleted successfully!\n";
+                return;
+            }
+        }
+        cout << "Car not found!\n";
+    }
+
+    void viewMyListedCars() {
+        cout << "\n--- My Listed Rental Cars ---\n";
+        bool found = false;
+        for (const auto& car : rentalCars) {
+            if (car.getOwnerId() == currentUser->getUserId()) {
+                car.display();
+                found = true;
+            }
+        }
+        if (!found) cout << "You have no listed cars.\n";
+    }
+    
+    void addUserSaleCar() {
+        string brand, model;
+        int year;
+        double price;
+
+        cout << "Brand: ";
+        getline(cin, brand);
+        cout << "Model: ";
+        getline(cin, model);
+        cout << "Year: ";
+        cin >> year;
+        cout << "Sale Price: PKR";
+        cin >> price;
+        cin.ignore();
+
+        string carId = generateSaleCarId();
+        saleCars.push_back(SaleCar(carId, brand, model, year, price, currentUser->getUserId()));
+        saveSaleCars();
+        cout << "Your car added successfully for sale with ID: " << carId << "\n";
+    }
+
+    void addSaleCar() {
+        string brand, model;
+        int year;
+        double price;
+
+        cout << "Brand: ";
+        getline(cin, brand);
+        cout << "Model: ";
+        getline(cin, model);
+        cout << "Year: ";
+        cin >> year;
+        cout << "Sale Price: PKR";
+        cin >> price;
+        cin.ignore();
+
+        string carId = generateSaleCarId();
+        saleCars.push_back(SaleCar(carId, brand, model, year, price, -1));
+        saveSaleCars();
+        cout << "Car added successfully for sale with ID: " << carId << "\n";
+    }
+
+    void viewAllSaleCars() {
+        cout << "\n--- All Sale Cars ---\n";
+        if (saleCars.empty()) {
+            cout << "No cars for sale.\n";
+            return;
+        }
+        for (const auto& car : saleCars) {
+            car.display();
+        }
+    }
+
+    void viewAvailableSaleCars() {
+        cout << "\n--- Available Cars for Sale ---\n";
+        bool found = false;
+        for (const auto& car : saleCars) {
+            if (!car.isSold()) {
+                car.display();
+                found = true;
+            }
+        }
+        if (!found) cout << "No cars available for sale.\n";
+    }
+
+    void buyCar() {
+        string carId;
+        cout << "Enter Car ID to buy: ";
+        getline(cin, carId);
+
+        try {
+            for (auto& car : saleCars) {
+                if (car.getId() == carId) {
+                    if (car.isSold()) {
+                        throw runtime_error("Car is already sold!");
+                    }
+                    
+                    car.setSold(true);
+                    saveSaleCars();
+                    
+                    // Generate PDF invoice
+                    string filename = "purchase_invoice_" + carId + ".pdf";
+                    PDFExporter::exportPurchaseInvoice(filename, car, *currentUser);
+                    
+                    cout << "\n--- PURCHASE INVOICE ---\n";
+                    cout << "Congratulations on your purchase!\n";
+                    cout << "Price: PKR" << car.getPrice() << endl;
+                    cout << "Purchase successful!\n";
+                    cout << "Invoice exported to '" << filename << "'\n";
+                    return;
+                }
+            }
+            throw runtime_error("Car not found!");
+        } catch (const exception& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+    }
+
+    void rentCar() {
+        string carId;
+        int days;
+        cout << "Enter Car ID to rent: ";
+        getline(cin, carId);
+        cout << "Number of days: ";
+        cin >> days;
+        cin.ignore();
+
+        try {
+            for (auto& car : rentalCars) {
+                if (car.getId() == carId) {
+                    if (!car.isAvailable()) {
+                        throw runtime_error("Car is not available!");
+                    }
+                    
+                    double cost = car.getDailyRate() * days;
+                    car.setAvailable(false);
+                    transactions.push_back(RentalTransaction(nextTransactionId++, currentUser->getUserId(), carId, cost));
+                    saveRentalCars();
+                    saveTransactions();
+                    
+                    // Generate PDF invoice
+                    string filename = "rental_invoice_" + carId + "_" + to_string(time(0)) + ".pdf";
+                    PDFExporter::exportRentalInvoice(filename, car, *currentUser, days, cost);
+                    
+                    cout << "\n--- RENTAL INVOICE ---\n";
+                    cout << "Car: " << car.getBrand() << " " << car.getModel() << endl;
+                    cout << "Days: " << days << endl;
+                    cout << "Rate: PKR" << car.getDailyRate() << "/day\n";
+                    cout << "Total Cost: PKR" << cost << endl;
+                    cout << "Rental successful!\n";
+                    cout << "Invoice exported to '" << filename << "'\n";
+                    return;
+                }
+            }
+            throw runtime_error("Car not found!");
+        } catch (const exception& e) {
+            cout << "Error: " << e.what() << endl;
+        }
+    }
+
+    void returnCar() {
+        string carId;
+        cout << "Enter Car ID to return: ";
+        getline(cin, carId);
+
+        for (auto& trans : transactions) {
+            if (trans.getCarId() == carId && trans.getUserId() == currentUser->getUserId() && !trans.getIsReturned()) {
+                trans.markReturned(0);
+                
+                for (auto& car : rentalCars) {
+                    if (car.getId() == carId) {
+                        car.setAvailable(true);
+                        saveRentalCars();
+                        saveTransactions();
+                        cout << "Car returned successfully!\n";
+                        return;
+                    }
+                }
+            }
+        }
+        cout << "No active rental found for this car!\n";
+    }
+
+    void viewMyRentals() {
+        cout << "\n--- My Rental History ---\n";
+        bool found = false;
+        for (const auto& trans : transactions) {
+            if (trans.getUserId() == currentUser->getUserId()) {
+                trans.display();
+                found = true;
+            }
+        }
+        if (!found) cout << "No rental history.\n";
+    }
+
+    void viewAllRentals() {
+        cout << "\n--- All Rentals ---\n";
+        if (transactions.empty()) {
+            cout << "No rentals recorded.\n";
+            return;
+        }
+        for (const auto& trans : transactions) {
+            trans.display();
+        }
+    }
+
+    void viewRevenue() {
+        double totalRevenue = 0;
+        int totalRentals = 0;
+        
+        for (const auto& trans : transactions) {
+            totalRevenue += trans.getTotalCost();
+            totalRentals++;
+        }
+
+        cout << "\n--- Revenue Report ---\n";
+        cout << "Total Rentals: " << totalRentals << endl;
+        cout << "Total Revenue: PKR" << fixed << setprecision(2) << totalRevenue << endl;
+    }
+};
+
+int main() {
+    CarRentalSystem system;
+    system.run();
+    return 0;
+}
