@@ -1,1 +1,364 @@
+#include <iostream>
+#include <vector>               // For standard template library functions
+#include <string>
+#include <fstream>              // for file handling
+#include <iomanip>              // for set(W) and setprecision 
+#include <ctime>                // C++ library to include date and time function
+#include <sstream>              // To treat strings as input/output variables
+using namespace std;
 
+// Base Vehicle class
+class Vehicle {
+protected:
+    string id;
+    string brand;
+    string model;
+    int year;
+    double dailyRate;
+    bool available;
+    int ownerId; // -1 for admin cars, userId for user-owned cars
+
+public:         // constructor with member initializer
+    Vehicle() : id(""), year(0), dailyRate(0), available(true), ownerId(-1) {}
+
+                // Parameterized constructor with member initialzers
+                
+    Vehicle(string i, string b, string m, int y, double rate, int owner) 
+        : id(i), brand(b), model(m), year(y), dailyRate(rate), available(true), ownerId(owner) {}
+
+    virtual void display() const {          // virtual function with display results
+        cout << "ID: " << id << " | " << brand << " " << model 
+             << " (" << year << ") | Rate: PKR" << dailyRate << "/day | "
+             << (available ? "Available" : "Rented") 
+             << " | Owner: " << (ownerId == -1 ? "System" : "User") << endl;
+    }
+
+    string getId() const { 
+        return id;
+     }
+    bool isAvailable() const {
+         return available; 
+         }
+    void setAvailable(bool status) {
+         available = status;
+          }
+    double getDailyRate() const {
+         return dailyRate; 
+         }
+    string getBrand() const { 
+        return brand; }
+    string getModel() const { 
+        return model; }
+    int getOwnerId() const {
+         return ownerId; }
+    int getYear() const { 
+        return year; }
+    
+    virtual string serialize() const {              // simple function
+        stringstream ss;
+        ss << id << "," << brand << "," << model << "," << year << "," 
+           << dailyRate << "," << available << "," << ownerId;
+        return ss.str();
+    }
+};
+
+// RentalCar inherits from Vehicle
+class RentalCar : public Vehicle {              // Single inheritance
+private:
+    string fuelType;
+    int seatingCapacity;
+
+public:
+    RentalCar() : Vehicle(), seatingCapacity(0) {}
+    
+    RentalCar(string i, string b, string m, int y, double rate, string fuel, int seats, int owner)
+        : Vehicle(i, b, m, y, rate, owner), fuelType(fuel), seatingCapacity(seats) {}
+
+    void display() const override {
+        cout << "ID: " << id << " | " << brand << " " << model 
+             << " (" << year << ") | PKR" << dailyRate << "/day | "
+             << fuelType << " | " << seatingCapacity << " seats | "
+             << (available ? "Available" : "Rented") 
+             << " | Owner: " << (ownerId == -1 ? "System" : "User ID " + to_string(ownerId)) << endl;
+    }
+
+    string getFuelType() const {
+         return fuelType; 
+         }
+    int getSeats() const { 
+        return seatingCapacity;
+         }
+    
+    string serialize() const override {
+        stringstream ss;
+        ss << id << "," << brand << "," << model << "," << year << "," 
+           << dailyRate << "," << available << "," << ownerId << "," 
+           << fuelType << "," << seatingCapacity;
+        return ss.str();
+    }
+    
+    static RentalCar deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 9) {
+            return RentalCar(
+                tokens[0],        // id (now string)
+                tokens[1],        // brand
+                tokens[2],        // model
+                stoi(tokens[3]),  // year
+                stod(tokens[4]),  // dailyRate
+                tokens[7],        // fuelType
+                stoi(tokens[8]),  // seatingCapacity
+                stoi(tokens[6])   // ownerId
+            );
+        }
+        return RentalCar();
+    }
+};
+
+// SaleCar class for cars available for purchase
+class SaleCar {
+private:
+    string id;
+    string brand;
+    string model;
+    int year;
+    double price;
+    int sellerId;
+    bool sold;
+
+public:
+    SaleCar() : id(""), year(0), price(0), sellerId(-1), sold(false) {}
+    
+    SaleCar(string i, string b, string m, int y, double p, int seller)
+        : id(i), brand(b), model(m), year(y), price(p), sellerId(seller), sold(false) {}
+
+    void display() const {
+        cout << "ID: " << id << " | " << brand << " " << model 
+             << " (" << year << ") | Price: PKR" << price 
+             << " | " << (sold ? "SOLD" : "Available") << endl;
+    }
+
+    string getId() const { 
+        return id;
+         }
+    string getBrand() const {
+         return brand;
+          }
+    string getModel() const {
+         return model; 
+         }
+    int getYear() const {
+         return year; 
+         }
+    bool isSold() const { 
+        return sold; 
+        }
+    void setSold(bool status) { 
+        sold = status;
+         }
+    double getPrice() const { 
+        return price; 
+        }
+    int getSellerId() const {
+         return sellerId; 
+         }
+    
+    string serialize() const {
+        stringstream ss;
+        ss << id << "," << brand << "," << model << "," << year << "," 
+           << price << "," << sellerId << "," << sold;
+        return ss.str();
+    }
+    
+    static SaleCar deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 7) {
+            SaleCar car(
+                tokens[0],        // id (now string)
+                tokens[1],        // brand
+                tokens[2],        // model
+                stoi(tokens[3]),  // year
+                stod(tokens[4]),  // price
+                stoi(tokens[5])   // sellerId
+            );
+            car.setSold(stoi(tokens[6]));
+            return car;
+        }
+        return SaleCar();
+    }
+};
+
+// User class
+class User {
+private:
+    int userId;
+    string username;
+    string password;
+    string name;
+    bool isAdmin;
+
+public:
+    User() : userId(0), isAdmin(false) {}
+    
+    User(int id, string uname, string pass, string n, bool admin)
+        : userId(id), username(uname), password(pass), name(n), isAdmin(admin) {}
+
+    int getUserId() const { 
+        return userId; 
+        }
+    string getUsername() const {
+         return username;
+          }
+    string getPassword() const {
+         return password;
+          }
+    string getName() const { 
+        return name; 
+        }
+    bool getIsAdmin() const { 
+        return isAdmin;
+         }
+    
+    string serialize() const {
+        stringstream ss;
+        ss << userId << "," << username << "," << password << "," << name << "," << isAdmin;
+        return ss.str();
+    }
+    
+    static User deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 5) {
+            return User(
+                stoi(tokens[0]),
+                tokens[1],
+                tokens[2],
+                tokens[3],
+                stoi(tokens[4])
+            );
+        }
+        return User();
+    }
+};
+
+// Rental Transaction class
+class RentalTransaction {
+private:
+    int transactionId;
+    int userId;
+    string carId;
+    time_t rentalDate;
+    time_t returnDate;
+    double totalCost;
+    bool isReturned;
+
+public:
+    RentalTransaction() : transactionId(0), userId(0), carId(""), totalCost(0), isReturned(false) {
+        rentalDate = time(0);
+        returnDate = 0;
+    }
+    
+    RentalTransaction(int tid, int uid, string cid, double cost)
+        : transactionId(tid), userId(uid), carId(cid), totalCost(cost), isReturned(false) {
+        rentalDate = time(0);
+        returnDate = 0;
+    }
+
+    void markReturned(int days) {
+        isReturned = true;
+        returnDate = time(0);
+    }
+
+    int getTransactionId() const {
+         return transactionId; 
+         }
+    int getUserId() const { 
+        return userId; 
+        }
+    string getCarId() const { 
+        return carId; 
+        }
+    double getTotalCost() const { 
+        return totalCost;
+         }
+    bool getIsReturned() const {
+         return isReturned; 
+         }
+    
+    void display() const {
+        cout << "Transaction ID: " << transactionId 
+             << " | Car ID: " << carId 
+             << " | Cost: PKR" << totalCost 
+             << " | Status: " << (isReturned ? "Returned" : "Active") << endl;
+    }
+    
+    string serialize() const {
+        stringstream ss;
+        ss << transactionId << "," << userId << "," << carId << "," 
+           << totalCost << "," << isReturned;
+        return ss.str();
+    }
+    
+    static RentalTransaction deserialize(const string& line) {
+        stringstream ss(line);
+        string item;
+        vector<string> tokens;
+        
+        while (getline(ss, item, ',')) {
+            tokens.push_back(item);
+        }
+        
+        if (tokens.size() >= 5) {
+            RentalTransaction trans(
+                stoi(tokens[0]),
+                stoi(tokens[1]),
+                tokens[2],        // carId (now string)
+                stod(tokens[3])
+            );
+            if (stoi(tokens[4])) {
+                trans.markReturned(0);
+            }
+            return trans;
+        }
+        return RentalTransaction();
+    }
+};
+
+// PDF Export class
+class PDFExporter {
+public:
+    static void exportRentalInvoice(const string& filename, const RentalCar& car, 
+                                   const User& user, int days, double cost) {
+        ofstream pdf(filename);
+        
+        pdf << "================================================================================\n";
+        pdf << "                          CAR RENTAL INVOICE\n";
+        pdf << "================================================================================\n\n";
+        
+        time_t now = time(0);
+        pdf << "Date: " << ctime(&now);
+        pdf << "Invoice Number: INV-" << time(0) << "\n\n";
+        
+        pdf << "CUSTOMER DETAILS:\n";
+        pdf << "Name: " << user.getName() << "\n";
+        pdf << "Username: " << user.getUsername() << "\n\n";
