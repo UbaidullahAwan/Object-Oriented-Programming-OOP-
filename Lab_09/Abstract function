@@ -1,0 +1,25 @@
+#include<iostream>
+using namespace std;
+class shape{
+    public:
+    virtual void draw()=0;              // Creating an abstract function. Syntax (=0) indicates abstract function.
+};                                      //virtual keyword prior to function indicates avoiding this recall.
+class circle: public shape{
+    public:
+    void draw(){
+        cout<<"Drawing circle"<<endl;
+    }
+};
+class rectangle: public shape{
+    public: 
+    void draw(){
+        cout<<"Drawing rectangle"<<endl;
+    }
+};
+int main(){
+    circle c;
+    rectangle r;
+    c.draw();
+    r.draw();
+    return 0;
+}
